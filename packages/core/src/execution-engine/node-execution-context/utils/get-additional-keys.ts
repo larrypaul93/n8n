@@ -67,6 +67,9 @@ export function getAdditionalKeys(
 		},
 		$vars: additionalData.variables,
 		$secrets: options?.secretsEnabled ? getSecretsProxy(additionalData) : undefined,
+		$user: {
+			id: additionalData.userId,
+		},
 
 		// deprecated
 		$executionId: executionId,

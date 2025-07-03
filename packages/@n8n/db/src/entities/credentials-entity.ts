@@ -36,6 +36,14 @@ export class CredentialsEntity extends WithTimestampsAndStringId implements ICre
 	@Column({ default: false })
 	isManaged: boolean;
 
+	/**
+	 * Whether to filter this credential by userId in multi-user workflows.
+	 * When true, the credential will be user-specific (different users get different credentials).
+	 * When false, the credential will be shared across all users in the workflow.
+	 */
+	@Column({ default: false })
+	useUserFilter: boolean;
+
 	toJSON() {
 		const { shared, ...rest } = this;
 		return rest;

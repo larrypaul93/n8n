@@ -8,6 +8,7 @@ export type CredentialPayload = {
 	type: string;
 	data: ICredentialDataDecryptedObject;
 	isManaged?: boolean;
+	useUserFilter?: boolean;
 };
 
 export const randomApiKey = () => `n8n_api_${randomString(40)}`;

@@ -40,6 +40,12 @@ paths:
     $ref: './handlers/audit/spec/paths/audit.yml'
   /credentials:
     $ref: './handlers/credentials/spec/paths/credentials.yml'
+  /credentials/multi-user:
+    $ref: './handlers/credentials/spec/paths/credentials.multi-user.yml'
+  /credentials/multi-user/oauth:
+    $ref: './handlers/credentials/spec/paths/credentials.multi-user.oauth.yml'
+  /credentials/multi-user/oauth/url:
+    $ref: './handlers/credentials/spec/paths/credentials.multi-user.oauth.url.yml'
   /credentials/{id}:
     $ref: './handlers/credentials/spec/paths/credentials.id.yml'
   /credentials/schema/{credentialTypeName}:

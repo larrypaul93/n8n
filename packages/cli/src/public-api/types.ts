@@ -141,6 +141,26 @@ export declare namespace CredentialRequest {
 	type Delete = AuthenticatedRequest<{ id: string }, {}, {}, Record<string, string>>;
 
 	type Transfer = AuthenticatedRequest<{ id: string }, {}, { destinationProjectId: string }>;
+
+	type GetMultiUserOAuthUrl = AuthenticatedRequest<
+		{},
+		{},
+		{ credentialId: string; customUserId: string },
+		{}
+	>;
+
+	type CreateMultiUserCredential = AuthenticatedRequest<
+		{},
+		{},
+		{
+			customUserId: string;
+			templateCredentialId: string;
+			credentialData: ICredentialDataDecryptedObject;
+			description?: string;
+			additionalData?: Record<string, any>;
+		},
+		{}
+	>;
 }
 
 export type OperationID = 'getUsers' | 'getUser';

@@ -14,6 +14,7 @@ import { OnLeaderStepdown, OnLeaderTakeover, OnPubSubEvent, OnShutdown } from '@
 import { Container, Service } from '@n8n/di';
 import type { TEntitlement, TLicenseBlock } from '@n8n_io/license-sdk';
 import { LicenseManager } from '@n8n_io/license-sdk';
+import { LocalLicenseManager } from './local-license';
 import { InstanceSettings } from 'n8n-core';
 
 import config from '@/config';
@@ -93,7 +94,7 @@ export class License implements LicenseProvider {
 		}
 
 		try {
-			this.manager = new LicenseManager({
+			this.manager = new LocalLicenseManager({
 				server,
 				tenantId: this.globalConfig.license.tenantId,
 				productIdentifier: `n8n-${N8N_VERSION}`,

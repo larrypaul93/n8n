@@ -76,6 +76,7 @@ import { CreateTestRun1732549866705 } from '../common/1732549866705-CreateTestRu
 import { AddMockedNodesColumnToTestDefinition1733133775640 } from '../common/1733133775640-AddMockedNodesColumnToTestDefinition';
 import { AddManagedColumnToCredentialsTable1734479635324 } from '../common/1734479635324-AddManagedColumnToCredentialsTable';
 import { AddStatsColumnsToTestRun1736172058779 } from '../common/1736172058779-AddStatsColumnsToTestRun';
+import { AddUserFilterColumnToCredentialsTable1750886296000 } from '../common/1750886296000-AddUserFilterColumnToCredentialsTable';
 import { CreateTestCaseExecutionTable1736947513045 } from '../common/1736947513045-CreateTestCaseExecutionTable';
 import { AddErrorColumnsToTestRuns1737715421462 } from '../common/1737715421462-AddErrorColumnsToTestRuns';
 import { CreateFolderTable1738709609940 } from '../common/1738709609940-CreateFolderTable';
@@ -181,4 +182,5 @@ export const postgresMigrations: Migration[] = [
 	ClearEvaluation1745322634000,
 	AddProjectDescriptionColumn1747824239000,
 	AddLastActiveAtColumnToUser1750252139166,
+	AddUserFilterColumnToCredentialsTable1750886296000,
 ];

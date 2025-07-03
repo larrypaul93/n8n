@@ -5,6 +5,7 @@ import { credentialFields, credentialOperations } from './CredentialDescription'
 import { executionFields, executionOperations } from './ExecutionDescription';
 import { workflowFields, workflowOperations } from './WorkflowDescription';
 import { searchWorkflows } from './WorkflowLocator';
+import { searchCredentials, searchOAuthCredentials } from './CredentialLocator';
 
 /**
  * The n8n node provides access to the n8n API.
@@ -84,6 +85,10 @@ export class N8n implements INodeType {
 		listSearch: {
 			// Provide workflows search capability for the workflow resourceLocator
 			searchWorkflows,
+			// Provide credentials search capability for the credential resourceLocator
+			searchCredentials,
+			// Provide OAuth credentials search capability for OAuth operations
+			searchOAuthCredentials,
 		},
 	};
 }

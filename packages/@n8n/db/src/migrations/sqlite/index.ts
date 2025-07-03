@@ -74,6 +74,7 @@ import { CreateTestMetricTable1732271325258 } from '../common/1732271325258-Crea
 import { CreateTestRun1732549866705 } from '../common/1732549866705-CreateTestRunTable';
 import { AddMockedNodesColumnToTestDefinition1733133775640 } from '../common/1733133775640-AddMockedNodesColumnToTestDefinition';
 import { AddManagedColumnToCredentialsTable1734479635324 } from '../common/1734479635324-AddManagedColumnToCredentialsTable';
+import { AddUserFilterColumnToCredentialsTable1750886296000 } from '../common/1750886296000-AddUserFilterColumnToCredentialsTable';
 import { AddStatsColumnsToTestRun1736172058779 } from '../common/1736172058779-AddStatsColumnsToTestRun';
 import { CreateTestCaseExecutionTable1736947513045 } from '../common/1736947513045-CreateTestCaseExecutionTable';
 import { AddErrorColumnsToTestRuns1737715421462 } from '../common/1737715421462-AddErrorColumnsToTestRuns';
@@ -85,6 +86,7 @@ import { AddWorkflowArchivedColumn1745934666076 } from '../common/1745934666076-
 import { DropRoleTable1745934666077 } from '../common/1745934666077-DropRoleTable';
 import { AddProjectDescriptionColumn1747824239000 } from '../common/1747824239000-AddProjectDescriptionColumn';
 import { AddLastActiveAtColumnToUser1750252139166 } from '../common/1750252139166-AddLastActiveAtColumnToUser';
+import { CreateUserCredentialMappingTable1750886297000 } from '../common/1750886297000-CreateUserCredentialMappingTable';
 import type { Migration } from '../migration-types';
 const sqliteMigrations: Migration[] = [
 	InitialMigration1588102412422,
@@ -174,6 +176,8 @@ const sqliteMigrations: Migration[] = [
 	ClearEvaluation1745322634000,
 	AddProjectDescriptionColumn1747824239000,
 	AddLastActiveAtColumnToUser1750252139166,
+	AddUserFilterColumnToCredentialsTable1750886296000,
+	CreateUserCredentialMappingTable1750886297000,
 ];
 
 export { sqliteMigrations };

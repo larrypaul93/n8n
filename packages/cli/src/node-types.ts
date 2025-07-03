@@ -10,6 +10,7 @@ import { join, dirname } from 'path';
 
 import { LoadNodesAndCredentials } from './load-nodes-and-credentials';
 import { shouldAssignExecuteMethod } from './utils';
+import { injectUniversalTriggerProperties } from 'n8n-core';
 
 @Service()
 export class NodeTypes implements INodeTypes {
@@ -25,7 +26,10 @@ export class NodeTypes implements INodeTypes {
 		const nodeType = this.loadNodesAndCredentials.getNode(nodeTypeName);
 		const { description } = NodeHelpers.getVersionedNodeType(nodeType.type, version);
 
-		return { description: { ...description }, sourcePath: nodeType.sourcePath };
+		// Automatically inject universal trigger properties for ALL trigger nodes
+		const enhancedDescription = injectUniversalTriggerProperties(description);
+
+		return { description: { ...enhancedDescription }, sourcePath: nodeType.sourcePath };
 	}
 
 	getByName(nodeType: string): INodeType | IVersionedNodeType {
@@ -50,6 +54,10 @@ export class NodeTypes implements INodeTypes {
 
 		const node = this.loadNodesAndCredentials.getNode(nodeType);
 		const versionedNodeType = NodeHelpers.getVersionedNodeType(node.type, version);
+
+		// Automatically inject universal trigger properties for ALL trigger nodes
+		versionedNodeType.description = injectUniversalTriggerProperties(versionedNodeType.description);
+
 		if (toolRequested && typeof versionedNodeType.supplyData === 'function') {
 			throw new UnexpectedError('Node already has a `supplyData` method', { extra: { nodeType } });
 		}
@@ -138,7 +146,9 @@ export class NodeTypes implements INodeTypes {
 			const nodeType = this.loadNodesAndCredentials.getNode(nodeTypeName);
 			const { description } = NodeHelpers.getVersionedNodeType(nodeType.type, nodeTypeVersion);
 
-			const descriptionCopy = { ...description };
+			// Automatically inject universal trigger properties for ALL trigger nodes
+			const enhancedDescription = injectUniversalTriggerProperties(description);
+			const descriptionCopy = { ...enhancedDescription };
 
 			// TODO: do we still need this?
 			descriptionCopy.name = descriptionCopy.name.startsWith('n8n-nodes')

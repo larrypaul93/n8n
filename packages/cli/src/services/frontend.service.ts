@@ -6,7 +6,7 @@ import { Container, Service } from '@n8n/di';
 import { createWriteStream } from 'fs';
 import { mkdir } from 'fs/promises';
 import uniq from 'lodash/uniq';
-import { BinaryDataConfig, InstanceSettings } from 'n8n-core';
+import { BinaryDataConfig, InstanceSettings, injectUniversalTriggerProperties } from 'n8n-core';
 import type { ICredentialType, INodeTypeBaseDescription } from 'n8n-workflow';
 import path from 'path';
 
@@ -270,7 +270,14 @@ export class FrontendService {
 		// pre-render all the node and credential types as static json files
 		await mkdir(path.join(staticCacheDir, 'types'), { recursive: true });
 		const { credentials, nodes } = this.loadNodesAndCredentials.types;
-		this.writeStaticJSON('nodes', nodes);
+
+		// Apply universal property injection to all nodes before generating static JSON
+		// Cast to INodeTypeDescription since the nodes array contains full descriptions
+		const enhancedNodes = nodes.map((node) => {
+			return injectUniversalTriggerProperties(node as any);
+		});
+
+		this.writeStaticJSON('nodes', enhancedNodes);
 		this.writeStaticJSON('credentials', credentials);
 	}
 

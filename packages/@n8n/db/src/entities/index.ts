@@ -24,6 +24,7 @@ import { TagEntity } from './tag-entity';
 import { TestCaseExecution } from './test-case-execution.ee';
 import { TestRun } from './test-run.ee';
 import { User } from './user';
+import { UserCredentialMapping } from './user-credential-mapping';
 import { Variables } from './variables';
 import { WebhookEntity } from './webhook-entity';
 import { WorkflowEntity } from './workflow-entity';
@@ -50,6 +51,7 @@ export {
 	SharedWorkflow,
 	TagEntity,
 	User,
+	UserCredentialMapping,
 	WorkflowEntity,
 	WorkflowStatistics,
 	WorkflowTagMapping,
@@ -85,6 +87,7 @@ export const entities = {
 	SharedWorkflow,
 	TagEntity,
 	User,
+	UserCredentialMapping,
 	WorkflowEntity,
 	WorkflowStatistics,
 	WorkflowTagMapping,

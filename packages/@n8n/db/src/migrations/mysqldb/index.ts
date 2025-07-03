@@ -76,6 +76,7 @@ import { AddDescriptionToTestDefinition1731404028106 } from '../common/173140402
 import { CreateTestRun1732549866705 } from '../common/1732549866705-CreateTestRunTable';
 import { AddMockedNodesColumnToTestDefinition1733133775640 } from '../common/1733133775640-AddMockedNodesColumnToTestDefinition';
 import { AddManagedColumnToCredentialsTable1734479635324 } from '../common/1734479635324-AddManagedColumnToCredentialsTable';
+import { AddUserFilterColumnToCredentialsTable1750886296000 } from '../common/1750886296000-AddUserFilterColumnToCredentialsTable';
 import { CreateTestCaseExecutionTable1736947513045 } from '../common/1736947513045-CreateTestCaseExecutionTable';
 import { AddErrorColumnsToTestRuns1737715421462 } from '../common/1737715421462-AddErrorColumnsToTestRuns';
 import { CreateFolderTable1738709609940 } from '../common/1738709609940-CreateFolderTable';
@@ -183,4 +184,5 @@ export const mysqlMigrations: Migration[] = [
 	ClearEvaluation1745322634000,
 	AddProjectDescriptionColumn1747824239000,
 	AddLastActiveAtColumnToUser1750252139166,
+	AddUserFilterColumnToCredentialsTable1750886296000,
 ];

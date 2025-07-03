@@ -1,6 +1,7 @@
 import type { INodeProperties } from 'n8n-workflow';
 
 import { parseAndSetBodyJson } from './GenericFunctions';
+import { credentialIdLocator, oauthCredentialIdLocator } from './CredentialLocator';
 
 export const credentialOperations: INodeProperties[] = [
 	{
@@ -27,6 +28,17 @@ export const credentialOperations: INodeProperties[] = [
 				},
 			},
 			{
+				name: 'Create Multi User Credential',
+				value: 'createMultiUser',
+				action: 'Create a multi-user credential',
+				routing: {
+					request: {
+						method: 'POST',
+						url: '/credentials/multi-user',
+					},
+				},
+			},
+			{
 				name: 'Delete',
 				value: 'delete',
 				action: 'Delete a credential',
@@ -34,6 +46,17 @@ export const credentialOperations: INodeProperties[] = [
 					request: {
 						method: 'DELETE',
 						url: '=/credentials/{{ $parameter.credentialId }}',
+					},
+				},
+			},
+			{
+				name: 'Get OAuth URL for Multi User Credential',
+				value: 'getMultiUserOAuthUrl',
+				action: 'Get OAuth authorization URL for multi-user credential',
+				routing: {
+					request: {
+						method: 'POST',
+						url: '/credentials/multi-user/oauth/url',
 					},
 				},
 			},
@@ -162,8 +185,160 @@ const getSchemaOperation: INodeProperties[] = [
 	},
 ];
 
+const createMultiUserOperation: INodeProperties[] = [
+	{
+		displayName: 'Custom User ID',
+		name: 'customUserId',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. user123, customer456',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['createMultiUser'],
+			},
+		},
+		routing: {
+			request: {
+				body: {
+					customUserId: '={{ $value }}',
+				},
+			},
+		},
+		description: 'Custom user identifier for this credential mapping (not the n8n user ID)',
+	},
+	{
+		...credentialIdLocator,
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['createMultiUser'],
+			},
+		},
+		routing: {
+			request: {
+				body: {
+					templateCredentialId: '={{ $value }}',
+				},
+			},
+		},
+	},
+	{
+		displayName: 'Credential Data',
+		name: 'credentialData',
+		type: 'json',
+		default: '',
+		placeholder:
+			'{\n  "apiKey": "user-specific-api-key",\n  "baseUrl": "https://api.example.com"\n}',
+		required: true,
+		typeOptions: {
+			alwaysOpenEditWindow: true,
+		},
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['createMultiUser'],
+			},
+		},
+		routing: {
+			send: {
+				preSend: [parseAndSetBodyJson('credentialData', 'credentialData')],
+			},
+		},
+		description: 'User-specific credential data as a JSON object',
+	},
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. API credentials for user123',
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['createMultiUser'],
+			},
+		},
+		routing: {
+			request: {
+				body: {
+					description: '={{ $value }}',
+				},
+			},
+		},
+		description: 'Optional description for this credential mapping',
+	},
+];
+
+const getMultiUserOAuthUrlOperation: INodeProperties[] = [
+	{
+		...oauthCredentialIdLocator,
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['getMultiUserOAuthUrl'],
+			},
+		},
+		routing: {
+			request: {
+				body: {
+					credentialId: '={{ $value }}',
+				},
+			},
+		},
+	},
+	{
+		displayName: 'Custom User ID',
+		name: 'customUserId',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. user123, customer456',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['getMultiUserOAuthUrl'],
+			},
+		},
+		routing: {
+			request: {
+				body: {
+					customUserId: '={{ $value }}',
+				},
+			},
+		},
+		description: 'Custom user identifier for this OAuth flow',
+	},
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. OAuth setup for user123',
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['getMultiUserOAuthUrl'],
+			},
+		},
+		routing: {
+			request: {
+				body: {
+					description: '={{ $value }}',
+				},
+			},
+		},
+		description: 'Optional description for this OAuth credential mapping',
+	},
+];
+
 export const credentialFields: INodeProperties[] = [
 	...createOperation,
+	...createMultiUserOperation,
 	...deleteOperation,
+	...getMultiUserOAuthUrlOperation,
 	...getSchemaOperation,
 ];

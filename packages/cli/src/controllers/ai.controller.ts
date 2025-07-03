@@ -140,6 +140,7 @@ export class AiController {
 					url: aiCredits.url,
 				},
 				projectId: payload?.projectId,
+				useUserFilter: false,
 			};
 
 			const newCredential = await this.credentialsService.createManagedCredential(

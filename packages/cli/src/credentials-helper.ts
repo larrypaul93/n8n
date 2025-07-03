@@ -3,7 +3,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import type { CredentialsEntity, ICredentialsDb } from '@n8n/db';
-import { CredentialsRepository, SharedCredentialsRepository } from '@n8n/db';
+import {
+	CredentialsRepository,
+	SharedCredentialsRepository,
+	UserCredentialMappingRepository,
+} from '@n8n/db';
 import { Service } from '@n8n/di';
 // eslint-disable-next-line n8n-local-rules/misplaced-n8n-typeorm-import
 import { EntityNotFoundError, In } from '@n8n/typeorm';
@@ -78,6 +82,7 @@ export class CredentialsHelper extends ICredentialsHelper {
 		private readonly credentialsOverwrites: CredentialsOverwrites,
 		private readonly credentialsRepository: CredentialsRepository,
 		private readonly sharedCredentialsRepository: SharedCredentialsRepository,
+		private readonly userCredentialMappingRepository: UserCredentialMappingRepository,
 		private readonly cacheService: CacheService,
 	) {
 		super();
@@ -190,6 +195,8 @@ export class CredentialsHelper extends ICredentialsHelper {
 							node.credentials[credentialType.name],
 							credentialType.name,
 							Object.assign(credentials, output),
+							// Note: userId not available in this context, using undefined for backward compatibility
+							undefined,
 						);
 						return Object.assign(credentials, output);
 					}
@@ -241,6 +248,7 @@ export class CredentialsHelper extends ICredentialsHelper {
 	async getCredentials(
 		nodeCredential: INodeCredentialsDetails,
 		type: string,
+		userId?: string,
 	): Promise<Credentials> {
 		if (!nodeCredential.id) {
 			throw new UnexpectedError('Found credential with no ID.', {
@@ -252,10 +260,64 @@ export class CredentialsHelper extends ICredentialsHelper {
 		let credential: CredentialsEntity;
 
 		try {
-			credential = await this.credentialsRepository.findOneByOrFail({
-				id: nodeCredential.id,
-				type,
-			});
+			// First, get the original credential to check if it requires user filtering
+			let originalCredential: CredentialsEntity | null = null;
+			if (nodeCredential.id) {
+				try {
+					originalCredential = await this.credentialsRepository.findOneByOrFail({
+						id: nodeCredential.id,
+						type,
+					});
+				} catch (error) {
+					console.log(`getCredentials: Original credential not found: ${nodeCredential.id}`);
+				}
+			}
+
+			// If userId is provided and the original credential requires user filtering,
+			// check the mapping table for user-specific credential data
+			if (userId && originalCredential?.useUserFilter) {
+				console.log(
+					`getCredentials: Original credential requires user filtering, checking mapping for userId=${userId}, templateCredentialId=${originalCredential.id}`,
+				);
+
+				// Look up the user-specific credential data from the mapping table
+				const userCredentialData =
+					await this.userCredentialMappingRepository.findUserCredentialData(
+						userId,
+						originalCredential.id,
+					);
+
+				if (userCredentialData) {
+					console.log(`getCredentials: Found user-specific credential data for user: ${userId}`);
+					// Create a virtual credential using the template credential structure but with user's data
+					credential = Object.assign(
+						Object.create(Object.getPrototypeOf(originalCredential)),
+						originalCredential,
+					);
+					credential.data = userCredentialData; // Use user's encrypted data
+					console.log(
+						`getCredentials: Using user-specific credential data for template: ${originalCredential.id}`,
+					);
+				} else {
+					console.log(
+						`getCredentials: No credential data found for user "${userId}" and template credential "${originalCredential.id}"`,
+					);
+					throw new Error(
+						`No credential data found for user "${userId}" and template credential "${originalCredential.id}"`,
+					);
+				}
+			} else if (originalCredential) {
+				// Use the original credential (either no userId provided, or credential doesn't require user filtering)
+				credential = originalCredential;
+
+				console.log(
+					`getCredentials: Using original credential: ${credential.id} (useUserFilter: ${credential.useUserFilter})`,
+					credential,
+				);
+			} else {
+				// No original credential found and no way to resolve
+				throw new Error(`Credential with ID "${nodeCredential.id}" not found`);
+			}
 		} catch (error) {
 			if (error instanceof EntityNotFoundError) {
 				throw new CredentialNotFoundError(nodeCredential.id, type);
@@ -265,7 +327,10 @@ export class CredentialsHelper extends ICredentialsHelper {
 		}
 
 		return new Credentials(
-			{ id: credential.id, name: credential.name },
+			{
+				id: credential.id,
+				name: credential.name,
+			},
 			credential.type,
 			credential.data,
 		);
@@ -324,7 +389,7 @@ export class CredentialsHelper extends ICredentialsHelper {
 		raw?: boolean,
 		expressionResolveValues?: ICredentialsExpressionResolveValues,
 	): Promise<ICredentialDataDecryptedObject> {
-		const credentials = await this.getCredentials(nodeCredentials, type);
+		const credentials = await this.getCredentials(nodeCredentials, type, additionalData.userId);
 		const decryptedDataOriginal = credentials.getData();
 
 		if (raw === true) {
@@ -432,8 +497,9 @@ export class CredentialsHelper extends ICredentialsHelper {
 		nodeCredentials: INodeCredentialsDetails,
 		type: string,
 		data: ICredentialDataDecryptedObject,
+		userId?: string,
 	): Promise<void> {
-		const credentials = await this.getCredentials(nodeCredentials, type);
+		const credentials = await this.getCredentials(nodeCredentials, type, userId);
 
 		credentials.setData(data);
 		const newCredentialsData = credentials.getDataToSave() as ICredentialsDb;

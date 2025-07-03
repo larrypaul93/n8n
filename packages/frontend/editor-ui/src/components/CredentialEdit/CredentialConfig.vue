@@ -51,6 +51,7 @@ type Props = {
 	requiredPropertiesFilled?: boolean;
 	showAuthTypeSelector?: boolean;
 	isManaged?: boolean;
+	useUserFilter?: boolean;
 };
 
 const props = withDefaults(defineProps<Props>(), {
@@ -59,6 +60,7 @@ const props = withDefaults(defineProps<Props>(), {
 	authError: '',
 	showValidationWarning: false,
 	credentialPermissions: () => ({}) as PermissionsRecord['credential'],
+	useUserFilter: false,
 });
 const emit = defineEmits<{
 	update: [value: IUpdateInformation];
@@ -183,6 +185,15 @@ const assistantAlreadyAsked = computed<boolean>(() => {
 
 function onDataChange(event: IUpdateInformation): void {
 	emit('update', event);
+}
+
+function onUserFilterChange(value: boolean | string | number): void {
+	const boolValue = typeof value === 'boolean' ? value : Boolean(value);
+	console.log('onUserFilterChange called with value:', boolValue);
+	emit('update', {
+		name: 'useUserFilter',
+		value: boolValue,
+	});
 }
 
 function onDocumentationUrlClick(): void {
@@ -352,6 +363,30 @@ watch(showOAuthSuccessBanner, (newValue, oldValue) => {
 				:show-validation-warnings="showValidationWarning"
 				@update="onDataChange"
 			/>
+
+			<!-- User Filter Configuration -->
+			<div v-if="credentialType && credentialPermissions.update" class="mt-s">
+				<n8n-input-label
+					:label="i18n.baseText('credentialEdit.credentialConfig.userFilter.label')"
+					:bold="false"
+					size="small"
+					color="text-dark"
+				>
+					<n8n-checkbox
+						:model-value="useUserFilter"
+						@update:model-value="onUserFilterChange"
+						data-test-id="credential-user-filter-checkbox"
+					>
+						<i18n-t keypath="credentialEdit.credentialConfig.userFilter.description">
+							<template #strong>
+								<strong>{{
+									i18n.baseText('credentialEdit.credentialConfig.userFilter.description.strong')
+								}}</strong>
+							</template>
+						</i18n-t>
+					</n8n-checkbox>
+				</n8n-input-label>
+			</div>
 
 			<OauthButton
 				v-if="

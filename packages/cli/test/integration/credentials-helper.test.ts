@@ -150,4 +150,102 @@ describe('CredentialsHelper', () => {
 			expect(result).toBe(false);
 		});
 	});
+
+	describe('getCredentials with user filtering', () => {
+		test('should use specific credential when useUserFilter is false', async () => {
+			const credential = await saveCredential(
+				{ ...randomCredentialPayload(), useUserFilter: false },
+				{ user: owner, role: 'credential:owner' },
+			);
+
+			// Debug: Check if useUserFilter was saved correctly
+			console.log('Saved credential useUserFilter:', credential.useUserFilter);
+
+			const nodeCredential = { id: credential.id, name: credential.name };
+			const result = await credentialHelper.getCredentials(
+				nodeCredential,
+				credential.type,
+				owner.id,
+			);
+
+			expect(result.id).toBe(credential.id);
+			expect(result.name).toBe(credential.name);
+		});
+
+		test('should find user-specific credential when useUserFilter is true', async () => {
+			// Create a credential with useUserFilter enabled
+			const userSpecificCredential = await saveCredential(
+				{ ...randomCredentialPayload(), useUserFilter: true },
+				{ user: member, role: 'credential:owner' },
+			);
+
+			// Create another credential of the same type with useUserFilter disabled
+			const sharedCredential = await saveCredential(
+				{ ...randomCredentialPayload(), type: userSpecificCredential.type, useUserFilter: false },
+				{ user: owner, role: 'credential:owner' },
+			);
+
+			// Debug: Check the saved credentials
+			console.log('User-specific credential:', {
+				id: userSpecificCredential.id,
+				type: userSpecificCredential.type,
+				useUserFilter: userSpecificCredential.useUserFilter,
+				ownerId: member.id,
+			});
+			console.log('Shared credential:', {
+				id: sharedCredential.id,
+				type: sharedCredential.type,
+				useUserFilter: sharedCredential.useUserFilter,
+				ownerId: owner.id,
+			});
+
+			// When requesting with the shared credential ID but with a userId,
+			// it should return the user-specific credential instead
+			const nodeCredential = { id: sharedCredential.id, name: sharedCredential.name };
+			const result = await credentialHelper.getCredentials(
+				nodeCredential,
+				userSpecificCredential.type,
+				member.id,
+			);
+
+			console.log('Result credential:', {
+				id: result.id,
+				name: result.name,
+			});
+
+			// Should get the user-specific credential, not the shared one
+			expect(result.id).toBe(userSpecificCredential.id);
+			expect(result.name).toBe(userSpecificCredential.name);
+		});
+
+		test('should use shared credential when no user-specific credential exists', async () => {
+			const sharedCredential = await saveCredential(
+				{ ...randomCredentialPayload(), useUserFilter: false },
+				{ user: owner, role: 'credential:owner' },
+			);
+
+			const nodeCredential = { id: sharedCredential.id, name: sharedCredential.name };
+			const result = await credentialHelper.getCredentials(
+				nodeCredential,
+				sharedCredential.type,
+				member.id,
+			);
+
+			expect(result.id).toBe(sharedCredential.id);
+			expect(result.name).toBe(sharedCredential.name);
+		});
+
+		test('should throw error when user-specific credential is required but not found', async () => {
+			const userSpecificCredential = await saveCredential(
+				{ ...randomCredentialPayload(), useUserFilter: true },
+				{ user: owner, role: 'credential:owner' },
+			);
+
+			const nodeCredential = { id: userSpecificCredential.id, name: userSpecificCredential.name };
+
+			await expect(
+				credentialHelper.getCredentials(nodeCredential, userSpecificCredential.type, member.id),
+			).rejects.toThrow('No user-specific credentials');
+		});
+	});
 });

@@ -82,6 +82,7 @@ const credentialId = ref('');
 const credentialName = ref('');
 const selectedCredential = ref('');
 const credentialData = ref<ICredentialDataDecryptedObject>({});
+const useUserFilter = ref(false);
 const currentCredential = ref<ICredentialsResponse | ICredentialsDecryptedResponse | null>(null);
 const modalBus = ref(createEventBus());
 const isDeleting = ref(false);
@@ -346,6 +347,7 @@ onMounted(async () => {
 			...credentialData.value,
 			...(homeProject.value ? { homeProject: homeProject.value } : {}),
 		};
+		useUserFilter.value = false; // Default to false for new credentials
 	} else {
 		await loadCurrentCredential();
 	}
@@ -522,6 +524,9 @@ async function loadCurrentCredential() {
 			};
 		}
 
+		// Set the useUserFilter field
+		useUserFilter.value = currentCredentials.useUserFilter ?? false;
+
 		credentialName.value = currentCredentials.name;
 	} catch (error) {
 		toast.showError(
@@ -559,6 +564,16 @@ function onChangeSharedWith(sharedWithProjects: ProjectSharingData[]) {
 }
 
 function onDataChange({ name, value }: IUpdateInformation) {
+	// Handle useUserFilter separately since it's not part of credential data
+	if (name === 'useUserFilter') {
+		console.log('onDataChange useUserFilter - current:', useUserFilter.value, 'new:', value);
+		if (useUserFilter.value === value) return;
+		useUserFilter.value = value as boolean;
+		console.log('onDataChange useUserFilter - updated to:', useUserFilter.value);
+		hasUnsavedChanges.value = true;
+		return;
+	}
+
 	// skip update if new value matches the current
 	if (credentialData.value[name] === value) return;
 
@@ -685,6 +700,7 @@ async function saveCredential(): Promise<ICredentialsResponse | null> {
 		name: credentialName.value,
 		type: credentialTypeName.value,
 		data: data as unknown as ICredentialDataDecryptedObject,
+		useUserFilter: useUserFilter.value,
 	};
 
 	if (
@@ -932,6 +948,7 @@ async function deleteCredential() {
 	// Now that the credentials were removed check if any nodes used them
 	nodeHelpers.updateNodesCredentialsIssues();
 	credentialData.value = {};
+	useUserFilter.value = false;
 
 	toast.showMessage({
 		title: i18n.baseText('credentialEdit.credentialEdit.showMessage.title'),
@@ -1160,6 +1177,7 @@ const { width } = useElementSize(credNameRef);
 						:mode="mode"
 						:selected-credential="selectedCredential"
 						:show-auth-type-selector="requiredCredentials"
+						:use-user-filter="useUserFilter"
 						@update="onDataChange"
 						@oauth="oAuthCredentialAuthorize"
 						@retest="retestCredential"

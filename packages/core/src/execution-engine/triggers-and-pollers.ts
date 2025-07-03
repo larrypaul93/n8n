@@ -13,9 +13,12 @@ import type {
 	IExecuteResponsePromiseData,
 	IRun,
 } from 'n8n-workflow';
+
+import { extractUserIdFromTriggerNode } from './universal-trigger-properties';
 import assert from 'node:assert';
 
 import type { IGetExecuteTriggerFunctions } from './interfaces';
+import { extractUserIdFromTriggerData } from './universal-trigger-properties';
 
 @Service()
 export class TriggersAndPollers {
@@ -56,6 +59,9 @@ export class TriggersAndPollers {
 					responsePromise?: IDeferredPromise<IExecuteResponsePromiseData>,
 					donePromise?: IDeferredPromise<IRun>,
 				) => {
+					// Universal user ID extraction for ALL trigger nodes
+					this.extractAndSetUserId(node, data, additionalData);
+
 					if (responsePromise) {
 						hooks.addHandler('sendResponse', (response) => responsePromise.resolve(response));
 					}
@@ -80,8 +86,47 @@ export class TriggersAndPollers {
 
 			return triggerResponse;
 		}
+		// In all other modes, wrap the emit function to extract user ID
+		const originalEmit = triggerFunctions.emit;
+		triggerFunctions.emit = (
+			data: INodeExecutionData[][],
+			responsePromise?: IDeferredPromise<IExecuteResponsePromiseData>,
+			donePromise?: IDeferredPromise<IRun>,
+		) => {
+			// Universal user ID extraction for ALL trigger nodes
+			this.extractAndSetUserId(node, data, additionalData);
+			return originalEmit(data, responsePromise, donePromise);
+		};
+
 		// In all other modes simply start the trigger
 		return await nodeType.trigger.call(triggerFunctions);
+	}
+
+	/**
+	 * Universal method to extract user ID from trigger data and set it in additional data
+	 * This works for ALL trigger nodes without any modifications to individual nodes
+	 */
+	private extractAndSetUserId(
+		node: INode,
+		data: INodeExecutionData[][],
+		additionalData: IWorkflowExecuteAdditionalData,
+	): void {
+		try {
+			// Get the first item from the first output
+			const firstItem = data[0]?.[0];
+			if (!firstItem?.json) return;
+
+			// Use the simplified extraction function that works without expression engine
+			const extractedUserId = extractUserIdFromTriggerNode(node, firstItem.json);
+
+			if (extractedUserId) {
+				// Set the user ID in the additional data for credential resolution
+				additionalData.userId = extractedUserId;
+			}
+		} catch (error) {
+			// Silently fail if extraction fails - don't break the workflow
+			// This ensures backward compatibility
+		}
 	}
 
 	/**

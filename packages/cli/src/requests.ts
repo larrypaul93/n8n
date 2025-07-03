@@ -66,6 +66,7 @@ export declare namespace CredentialRequest {
 		data: ICredentialDataDecryptedObject;
 		projectId?: string;
 		isManaged?: boolean;
+		useUserFilter?: boolean;
 	}>;
 
 	type Get = AuthenticatedRequest<{ credentialId: string }, {}, {}, Record<string, string>>;
@@ -181,6 +182,42 @@ export declare namespace OAuthRequest {
 
 	namespace OAuth2Credential {
 		type Auth = AuthenticatedRequest<{}, {}, {}, { id: string }>;
+		type Callback = AuthenticatedRequest<{}, {}, {}, { code: string; state: string }>;
+	}
+
+	// OAuth flows for credential mapping
+	namespace OAuth1CredentialMapping {
+		type Auth = AuthenticatedRequest<
+			{},
+			{},
+			{},
+			{
+				templateCredentialId: string;
+				customUserId: string;
+				description?: string;
+			}
+		>;
+		type Callback = AuthenticatedRequest<
+			{},
+			{},
+			{},
+			{ oauth_verifier: string; oauth_token: string; state: string }
+		> & {
+			user?: User;
+		};
+	}
+
+	namespace OAuth2CredentialMapping {
+		type Auth = AuthenticatedRequest<
+			{},
+			{},
+			{},
+			{
+				templateCredentialId: string;
+				customUserId: string;
+				description?: string;
+			}
+		>;
 		type Callback = AuthenticatedRequest<{}, {}, {}, { code: string; state: string }>;
 	}
 }

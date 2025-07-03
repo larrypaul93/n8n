@@ -137,6 +137,7 @@ export interface ICredentialsDecrypted<T extends object = ICredentialDataDecrypt
 	data?: T;
 	homeProject?: ProjectSharingData;
 	sharedWithProjects?: ProjectSharingData[];
+	useUserFilter?: boolean;
 }
 
 export interface ICredentialsEncrypted {

@@ -104,6 +104,96 @@ export class CredentialsController {
 		};
 	}
 
+	@Get('/multi-user')
+	async getMultiUserCredentials(req: AuthenticatedRequest) {
+		// Only admin and owner users can access multi-user credentials
+		if (req.user.role !== 'global:admin' && req.user.role !== 'global:owner') {
+			throw new ForbiddenError('Only administrators can access multi-user credentials');
+		}
+
+		const credentials = await this.credentialsService.getMany(req.user, {
+			listQueryOptions: {},
+			includeScopes: false,
+			includeData: false,
+			onlySharedWithMe: false,
+		});
+
+		// Filter to only return credentials with useUserFilter: true
+		const multiUserCredentials = credentials.filter(
+			(credential) => credential.useUserFilter === true,
+		);
+
+		// Return simplified credential info for dropdown usage in the expected format
+		return {
+			data: multiUserCredentials.map((credential) => ({
+				id: credential.id,
+				name: credential.name,
+				type: credential.type,
+				useUserFilter: credential.useUserFilter,
+				createdAt: credential.createdAt,
+				updatedAt: credential.updatedAt,
+			})),
+		};
+	}
+
+	@Get('/multi-user/oauth')
+	async getMultiUserOAuthCredentials(req: AuthenticatedRequest) {
+		// Only admin and owner users can access multi-user credentials
+		if (req.user.role !== 'global:admin' && req.user.role !== 'global:owner') {
+			throw new ForbiddenError('Only administrators can access multi-user OAuth credentials');
+		}
+
+		const credentials = await this.credentialsService.getMany(req.user, {
+			listQueryOptions: {},
+			includeScopes: false,
+			includeData: false,
+			onlySharedWithMe: false,
+		});
+
+		// OAuth credential types (common ones)
+		const oauthTypes = [
+			'oauth1',
+			'oauth2',
+			'google',
+			'facebook',
+			'github',
+			'microsoft',
+			'slack',
+			'discord',
+			'linkedin',
+			'twitter',
+			'dropbox',
+			'salesforce',
+			'hubspot',
+			'zoom',
+			'box',
+			'trello',
+			'fitbit',
+			'flickr',
+			'tumblr',
+		];
+
+		// Filter to only return OAuth credentials with useUserFilter: true
+		const multiUserOAuthCredentials = credentials.filter((credential) => {
+			const isOAuth = oauthTypes.some((type) =>
+				credential.type.toLowerCase().includes(type.toLowerCase()),
+			);
+			return credential.useUserFilter === true && isOAuth;
+		});
+
+		// Return simplified credential info for dropdown usage in the expected format
+		return {
+			data: multiUserOAuthCredentials.map((credential) => ({
+				id: credential.id,
+				name: credential.name,
+				type: credential.type,
+				useUserFilter: credential.useUserFilter,
+				createdAt: credential.createdAt,
+				updatedAt: credential.updatedAt,
+			})),
+		};
+	}
+
 	@Get('/:credentialId')
 	@ProjectScope('credential:read')
 	async getOne(
@@ -239,6 +329,11 @@ export class CredentialsController {
 			type: preparedCredentialData.type,
 			data: preparedCredentialData.data as unknown as ICredentialDataDecryptedObject,
 		});
+
+		// Include the useUserFilter field in the update data
+		if ('useUserFilter' in preparedCredentialData) {
+			newCredentialData.useUserFilter = preparedCredentialData.useUserFilter;
+		}
 
 		const responseData = await this.credentialsService.update(credentialId, newCredentialData);
 

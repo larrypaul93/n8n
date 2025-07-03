@@ -701,6 +701,7 @@ export class CredentialsService {
 	/**
 	 * Create a new credential in user's account and return it along the scopes
 	 * If a projectId is send, then it also binds the credential to that specific project
+	 * If targetUserId is provided, creates the credential for that user instead
 	 */
 	async createUnmanagedCredential(dto: CreateCredentialDto, user: User) {
 		return await this.createCredential({ ...dto, isManaged: false }, user);
@@ -709,6 +710,7 @@ export class CredentialsService {
 	/**
 	 * Create a new managed credential in user's account and return it along the scopes.
 	 * Managed credentials are managed by n8n and cannot be edited by the user.
+	 * If targetUserId is provided, creates the credential for that user instead
 	 */
 	async createManagedCredential(dto: CreateCredentialDto, user: User) {
 		return await this.createCredential({ ...dto, isManaged: true }, user);
@@ -725,6 +727,7 @@ export class CredentialsService {
 		const credentialEntity = this.credentialsRepository.create({
 			...encryptedCredential,
 			isManaged: opts.isManaged,
+			useUserFilter: opts.useUserFilter ?? false,
 		});
 
 		const { shared, ...credential } = await this.save(
@@ -734,6 +737,7 @@ export class CredentialsService {
 			opts.projectId,
 		);
 
+		// Get scopes for the requesting user (not the target user)
 		const scopes = await this.getCredentialScopes(user, credential.id);
 
 		return { ...credential, scopes };

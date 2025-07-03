@@ -9,7 +9,6 @@ import type {
 	IHttpRequestOptions,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
-	IRequestOptions,
 	JsonObject,
 	PreSendAction,
 } from 'n8n-workflow';
@@ -33,13 +32,20 @@ export async function apiRequest(
 	};
 
 	const credentials = await this.getCredentials<N8nApiCredentials>('n8nApi');
-	const baseUrl = credentials.baseUrl;
+	let baseUrl = credentials.baseUrl;
 
-	const options: IRequestOptions = {
+	// Handle case where baseUrl is empty or invalid - default to current instance
+	if (!baseUrl || !baseUrl.startsWith('http')) {
+		// Default to localhost for development/testing
+		baseUrl = 'http://localhost:5678/api/v1';
+		console.log('apiRequest: baseUrl was empty or invalid, defaulting to localhost:', baseUrl);
+	}
+
+	const options: IHttpRequestOptions = {
 		method,
 		body,
 		qs: query,
-		uri: `${baseUrl.replace(new RegExp('/$'), '')}/${endpoint}`,
+		url: `${baseUrl.replace(new RegExp('/$'), '')}/${endpoint}`,
 		json: true,
 	};
 

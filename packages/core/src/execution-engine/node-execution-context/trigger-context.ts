@@ -6,6 +6,7 @@ import type {
 	Workflow,
 	WorkflowActivateMode,
 	WorkflowExecuteMode,
+	INodeExecutionData,
 } from 'n8n-workflow';
 import { ApplicationError, createDeferredPromise } from 'n8n-workflow';
 
@@ -46,6 +47,48 @@ export class TriggerContext extends NodeExecutionContext implements ITriggerFunc
 			...getBinaryHelperFunctions(additionalData, workflow.id),
 			...getSchedulingFunctions(workflow),
 		};
+	}
+
+	/**
+	 * Extract user ID from trigger data based on node configuration
+	 */
+	private extractUserIdFromData(data: INodeExecutionData[][]): string | undefined {
+		try {
+			// Check if user ID extraction is configured
+			const userIdField = this.getNodeParameter('userIdField', '') as string;
+			if (!userIdField) return undefined;
+
+			// Get the first item from the first output
+			const firstItem = data[0]?.[0];
+			if (!firstItem?.json) return undefined;
+
+			// Extract user ID using dot notation
+			return this.getValueByPath(firstItem.json, userIdField);
+		} catch (error) {
+			// Silently fail if extraction fails
+			return undefined;
+		}
+	}
+
+	/**
+	 * Get value from object using dot notation path
+	 */
+	private getValueByPath(obj: any, path: string): string | undefined {
+		if (!obj || !path) return undefined;
+
+		try {
+			const keys = path.split('.');
+			let current = obj;
+
+			for (const key of keys) {
+				if (current === null || current === undefined) return undefined;
+				current = current[key];
+			}
+
+			return current ? String(current) : undefined;
+		} catch (error) {
+			return undefined;
+		}
 	}
 
 	getActivationMode() {

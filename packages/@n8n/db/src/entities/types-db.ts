@@ -35,6 +35,7 @@ export interface ITagBase {
 export interface ICredentialsBase {
 	createdAt: Date;
 	updatedAt: Date;
+	useUserFilter?: boolean;
 }
 
 export interface IExecutionBase {
