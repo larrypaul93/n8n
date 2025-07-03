@@ -90,6 +90,7 @@ import { DropRoleTable1745934666077 } from '../common/1745934666077-DropRoleTabl
 import { AddProjectDescriptionColumn1747824239000 } from '../common/1747824239000-AddProjectDescriptionColumn';
 import { AddLastActiveAtColumnToUser1750252139166 } from '../common/1750252139166-AddLastActiveAtColumnToUser';
 import { CreateUserCredentialMappingTable1750886297000 } from '../common/1750886297000-CreateUserCredentialMappingTable';
+import { RecreateUserCredentialMappingTable1750886298000 } from '../common/1750886298000-RecreateUserCredentialMappingTable';
 import type { Migration } from '../migration-types';
 
 export const postgresMigrations: Migration[] = [
@@ -185,4 +186,5 @@ export const postgresMigrations: Migration[] = [
 	AddLastActiveAtColumnToUser1750252139166,
 	AddUserFilterColumnToCredentialsTable1750886296000,
 	CreateUserCredentialMappingTable1750886297000,
+	RecreateUserCredentialMappingTable1750886298000,
 ];
