@@ -172,7 +172,7 @@ interface CredentialMapping {
 	id: string;
 	customUserId: string;
 	templateCredentialId: string;
-	actualCredentialId: string;
+	hasCredentialData: boolean;
 	description?: string;
 	isActive: boolean;
 	isUpdating?: boolean;

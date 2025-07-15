@@ -54,7 +54,7 @@ export class UserCredentialMappingRepository extends Repository<UserCredentialMa
 				customUserId,
 				isActive: true,
 			},
-			relations: ['templateCredential', 'actualCredential'],
+			relations: ['templateCredential'],
 			order: {
 				createdAt: 'DESC',
 			},
@@ -70,7 +70,7 @@ export class UserCredentialMappingRepository extends Repository<UserCredentialMa
 				templateCredentialId,
 				isActive: true,
 			},
-			relations: ['templateCredential', 'actualCredential'],
+			relations: ['templateCredential'],
 			order: {
 				createdAt: 'DESC',
 			},
