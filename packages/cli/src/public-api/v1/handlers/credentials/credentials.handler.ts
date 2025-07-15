@@ -243,11 +243,9 @@ export = {
 					req.body;
 
 				if (!customUserId || !templateCredentialId || !credentialData) {
-					return res
-						.status(400)
-						.json({
-							message: 'customUserId, templateCredentialId, and credentialData are required',
-						});
+					return res.status(400).json({
+						message: 'customUserId, templateCredentialId, and credentialData are required',
+					});
 				}
 
 				// Verify template credential exists and has useUserFilter enabled
@@ -330,12 +328,8 @@ export = {
 				let oauthType: 'oauth1' | 'oauth2' | null = null;
 				const credentialType = credential.type.toLowerCase();
 
-				// OAuth1 credential types
-				if (credentialType.includes('oauth1') || credentialType.includes('twitter')) {
-					oauthType = 'oauth1';
-				}
-				// OAuth2 credential types
-				else if (
+				// OAuth2 credential types (check OAuth2 first to handle cases like twitterOAuth2Api)
+				if (
 					credentialType.includes('oauth2') ||
 					credentialType.includes('google') ||
 					credentialType.includes('facebook') ||
@@ -346,6 +340,10 @@ export = {
 					credentialType.includes('linkedin')
 				) {
 					oauthType = 'oauth2';
+				}
+				// OAuth1 credential types (check OAuth1 after OAuth2 to avoid conflicts)
+				else if (credentialType.includes('oauth1')) {
+					oauthType = 'oauth1';
 				}
 
 				if (!oauthType) {
