@@ -46,6 +46,8 @@ paths:
     $ref: './handlers/credentials/spec/paths/credentials.multi-user.oauth.yml'
   /credentials/multi-user/oauth/url:
     $ref: './handlers/credentials/spec/paths/credentials.multi-user.oauth.url.yml'
+  /credentials/multi-user/user/{customUserId}:
+    $ref: './handlers/credentials/spec/paths/credentials.multi-user.user.customUserId.yml'
   /credentials/{id}:
     $ref: './handlers/credentials/spec/paths/credentials.id.yml'
   /credentials/schema/{credentialTypeName}:

@@ -291,6 +291,59 @@ export = {
 		},
 	],
 
+	getMultiUserCredentialsByUser: [
+		apiKeyHasScope('credential:create'),
+		async (
+			req: AuthenticatedRequest & {
+				params: { customUserId: string };
+				query: { includeData?: string; templateCredentialId?: string };
+			},
+			res: express.Response,
+		): Promise<express.Response> => {
+			try {
+				// Only admin and owner users can access multi-user credential mappings
+				if (req.user.role !== 'global:admin' && req.user.role !== 'global:owner') {
+					return res
+						.status(403)
+						.json({ message: 'Only administrators can view credential mappings' });
+				}
+
+				const { customUserId } = req.params;
+				const { includeData, templateCredentialId } = req.query;
+
+				if (!customUserId) {
+					return res.status(400).json({ message: 'customUserId parameter is required' });
+				}
+
+				// Use the UserCredentialMappingController to get mappings
+				const mappingController = Container.get(UserCredentialMappingController);
+
+				const mappings = await mappingController.getMappingsByUser(req, customUserId, {
+					includeData,
+				});
+
+				// Filter by templateCredentialId if provided
+				let filteredMappings = mappings;
+				if (templateCredentialId) {
+					filteredMappings = mappings.filter(
+						(mapping: any) => mapping.templateCredentialId === templateCredentialId,
+					);
+				}
+
+				return res.json(filteredMappings);
+			} catch (error) {
+				console.error('Error getting multi-user credentials by user:', error);
+				if (error.message.includes('not found')) {
+					return res.status(404).json({ message: error.message });
+				}
+				if (error.message.includes('Forbidden')) {
+					return res.status(403).json({ message: error.message });
+				}
+				return res.status(500).json({ message: 'Internal server error' });
+			}
+		},
+	],
+
 	getMultiUserOAuthUrl: [
 		apiKeyHasScope('credential:create'),
 		async (
