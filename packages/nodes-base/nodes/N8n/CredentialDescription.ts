@@ -67,7 +67,7 @@ export const credentialOperations: INodeProperties[] = [
 				routing: {
 					request: {
 						method: 'GET',
-						url: '/credentials/multi-user',
+						url: '=/user-credential-mappings/resolve/{{ $parameter.customUserId }}/{{ $parameter.templateCredentialId }}',
 					},
 				},
 			},
@@ -347,7 +347,53 @@ const getMultiUserOAuthUrlOperation: INodeProperties[] = [
 ];
 
 const getMultiUserOperation: INodeProperties[] = [
-	// No additional fields needed for this operation - it's a simple GET request
+	{
+		displayName: 'Template Credential',
+		name: 'templateCredentialId',
+		type: 'resourceLocator',
+		default: { mode: 'list', value: '' },
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['getMultiUser'],
+			},
+		},
+		description: 'The multi-user template credential to retrieve saved data for',
+		modes: [
+			{
+				displayName: 'From List',
+				name: 'list',
+				type: 'list',
+				placeholder: 'Select a template credential...',
+				typeOptions: {
+					searchListMethod: 'searchCredentials',
+					searchable: true,
+				},
+			},
+			{
+				displayName: 'ID',
+				name: 'id',
+				type: 'string',
+				placeholder: 'e.g. cred_abc123',
+			},
+		],
+	},
+	{
+		displayName: 'Custom User ID',
+		name: 'customUserId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['credential'],
+				operation: ['getMultiUser'],
+			},
+		},
+		description: 'The custom user ID to retrieve saved credential data for',
+		placeholder: 'e.g. user123, customer456',
+	},
 ];
 
 export const credentialFields: INodeProperties[] = [
