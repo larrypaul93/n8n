@@ -61,6 +61,17 @@ export const credentialOperations: INodeProperties[] = [
 				},
 			},
 			{
+				name: 'Get Multi User Credentials',
+				value: 'getMultiUser',
+				action: 'Get saved multi-user credentials',
+				routing: {
+					request: {
+						method: 'GET',
+						url: '/credentials/multi-user',
+					},
+				},
+			},
+			{
 				name: 'Get Schema',
 				value: 'getSchema',
 				action: 'Get credential data schema for type',
@@ -335,10 +346,15 @@ const getMultiUserOAuthUrlOperation: INodeProperties[] = [
 	},
 ];
 
+const getMultiUserOperation: INodeProperties[] = [
+	// No additional fields needed for this operation - it's a simple GET request
+];
+
 export const credentialFields: INodeProperties[] = [
 	...createOperation,
 	...createMultiUserOperation,
 	...deleteOperation,
+	...getMultiUserOperation,
 	...getMultiUserOAuthUrlOperation,
 	...getSchemaOperation,
 ];

@@ -55,12 +55,16 @@ describe('Test N8n Node', () => {
 			const createMultiUserOp = operations.options.find(
 				(op: any) => op.value === 'createMultiUser',
 			);
+			const getMultiUserOp = operations.options.find((op: any) => op.value === 'getMultiUser');
 			const getOAuthUrlOp = operations.options.find(
 				(op: any) => op.value === 'getMultiUserOAuthUrl',
 			);
 
 			expect(createMultiUserOp.routing.request.url).toBe('/credentials/multi-user');
 			expect(createMultiUserOp.routing.request.method).toBe('POST');
+
+			expect(getMultiUserOp.routing.request.url).toBe('/credentials/multi-user');
+			expect(getMultiUserOp.routing.request.method).toBe('GET');
 
 			expect(getOAuthUrlOp.routing.request.url).toBe('/credentials/multi-user/oauth/url');
 			expect(getOAuthUrlOp.routing.request.method).toBe('POST');
