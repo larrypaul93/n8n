@@ -257,6 +257,7 @@ export class UserCredentialMappingController {
 		req: AuthenticatedRequest,
 		@Param('customUserId') customUserId: string,
 		@Param('templateCredentialId') templateCredentialId: string,
+		@Query query: { includeData?: string },
 	) {
 		// Only admins and owners can resolve mappings
 		if (req.user.role !== 'global:admin' && req.user.role !== 'global:owner') {
@@ -272,7 +273,7 @@ export class UserCredentialMappingController {
 			throw new NotFoundError('No mapping found for the specified user and template credential');
 		}
 
-		return {
+		const response: any = {
 			id: mapping.id,
 			customUserId: mapping.customUserId,
 			templateCredentialId: mapping.templateCredentialId,
@@ -283,6 +284,20 @@ export class UserCredentialMappingController {
 			createdAt: mapping.createdAt,
 			updatedAt: mapping.updatedAt,
 		};
+
+		// Include decrypted credential data if requested
+		if (query.includeData === 'true' && mapping.encryptedData) {
+			try {
+				const decryptedData = this.userCredentialDataService.decryptCredentialData(
+					mapping.encryptedData,
+				);
+				response.data = decryptedData;
+			} catch (error) {
+				throw new BadRequestError('Failed to decrypt credential data');
+			}
+		}
+
+		return response;
 	}
 
 	/**

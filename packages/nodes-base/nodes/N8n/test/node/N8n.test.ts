@@ -67,6 +67,7 @@ describe('Test N8n Node', () => {
 				'=/user-credential-mappings/resolve/{{ $parameter.customUserId }}/{{ $parameter.templateCredentialId }}',
 			);
 			expect(getMultiUserOp.routing.request.method).toBe('GET');
+			expect(getMultiUserOp.routing.request.qs).toEqual({ includeData: 'true' });
 
 			expect(getOAuthUrlOp.routing.request.url).toBe('/credentials/multi-user/oauth/url');
 			expect(getOAuthUrlOp.routing.request.method).toBe('POST');

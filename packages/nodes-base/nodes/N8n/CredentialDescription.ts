@@ -68,6 +68,9 @@ export const credentialOperations: INodeProperties[] = [
 					request: {
 						method: 'GET',
 						url: '=/user-credential-mappings/resolve/{{ $parameter.customUserId }}/{{ $parameter.templateCredentialId }}',
+						qs: {
+							includeData: 'true',
+						},
 					},
 				},
 			},
