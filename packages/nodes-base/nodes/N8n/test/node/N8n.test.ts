@@ -64,10 +64,12 @@ describe('Test N8n Node', () => {
 			expect(createMultiUserOp.routing.request.method).toBe('POST');
 
 			expect(getMultiUserOp.routing.request.url).toBe(
-				'=/user-credential-mappings/resolve/{{ $parameter.customUserId }}/{{ $parameter.templateCredentialId }}',
+				'=/user-credential-mappings/user/{{ $parameter.customUserId }}',
 			);
 			expect(getMultiUserOp.routing.request.method).toBe('GET');
 			expect(getMultiUserOp.routing.request.qs).toEqual({ includeData: 'true' });
+			expect(getMultiUserOp.routing.output.postReceive).toBeDefined();
+			expect(getMultiUserOp.routing.output.postReceive[0].type).toBe('filter');
 
 			expect(getOAuthUrlOp.routing.request.url).toBe('/credentials/multi-user/oauth/url');
 			expect(getOAuthUrlOp.routing.request.method).toBe('POST');

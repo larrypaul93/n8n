@@ -94,13 +94,49 @@ export class UserCredentialMappingController {
 	 * Get all mappings for a specific custom user ID
 	 */
 	@Get('/user/:customUserId')
-	async getMappingsByUser(req: AuthenticatedRequest, @Param('customUserId') customUserId: string) {
+	async getMappingsByUser(
+		req: AuthenticatedRequest,
+		@Param('customUserId') customUserId: string,
+		@Query query: { includeData?: string },
+	) {
 		// Only admins and owners can view mappings
 		if (req.user.role !== 'global:admin' && req.user.role !== 'global:owner') {
 			throw new ForbiddenError('Only administrators can view credential mappings');
 		}
 
 		const mappings = await this.userCredentialMappingRepository.findByCustomUserId(customUserId);
+
+		// Include decrypted credential data if requested
+		if (query.includeData === 'true') {
+			return mappings.map((mapping) => {
+				const response: any = {
+					id: mapping.id,
+					customUserId: mapping.customUserId,
+					templateCredentialId: mapping.templateCredentialId,
+					hasCredentialData: !!mapping.encryptedData,
+					description: mapping.description,
+					additionalData: mapping.additionalData,
+					isActive: mapping.isActive,
+					createdAt: mapping.createdAt,
+					updatedAt: mapping.updatedAt,
+				};
+
+				if (mapping.encryptedData) {
+					try {
+						const decryptedData = this.userCredentialDataService.decryptCredentialData(
+							mapping.encryptedData,
+						);
+						response.data = decryptedData;
+					} catch (error) {
+						// If decryption fails, don't include the data field
+						response.hasCredentialData = false;
+					}
+				}
+
+				return response;
+			});
+		}
+
 		return mappings;
 	}
 

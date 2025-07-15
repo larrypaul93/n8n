@@ -67,10 +67,20 @@ export const credentialOperations: INodeProperties[] = [
 				routing: {
 					request: {
 						method: 'GET',
-						url: '=/user-credential-mappings/resolve/{{ $parameter.customUserId }}/{{ $parameter.templateCredentialId }}',
+						url: '=/user-credential-mappings/user/{{ $parameter.customUserId }}',
 						qs: {
 							includeData: 'true',
 						},
+					},
+					output: {
+						postReceive: [
+							{
+								type: 'filter',
+								properties: {
+									pass: '={{ $responseItem.templateCredentialId === $parameter.templateCredentialId }}',
+								},
+							},
+						],
 					},
 				},
 			},
