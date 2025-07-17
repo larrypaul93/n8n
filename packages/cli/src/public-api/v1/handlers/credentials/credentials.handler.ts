@@ -330,6 +330,24 @@ export = {
 					);
 				}
 
+				// Check if no credentials were found and provide meaningful response
+				if (!filteredMappings || filteredMappings.length === 0) {
+					if (templateCredentialId) {
+						return res.status(404).json({
+							message: `No credentials found for user '${customUserId}' with template credential '${templateCredentialId}'`,
+							customUserId,
+							templateCredentialId,
+							hasCredentials: false,
+						});
+					} else {
+						return res.status(404).json({
+							message: `No credentials found for user '${customUserId}'`,
+							customUserId,
+							hasCredentials: false,
+						});
+					}
+				}
+
 				return res.json(filteredMappings);
 			} catch (error) {
 				console.error('Error getting multi-user credentials by user:', error);
