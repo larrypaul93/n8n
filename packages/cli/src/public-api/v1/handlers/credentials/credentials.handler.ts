@@ -8,6 +8,8 @@ import { CredentialTypes } from '@/credential-types';
 import { EnterpriseCredentialsService } from '@/credentials/credentials.service.ee';
 import { CredentialsService } from '@/credentials/credentials.service';
 import { CredentialsHelper } from '@/credentials-helper';
+import { OAuth1CredentialController } from '@/controllers/oauth/oauth1-credential.controller';
+import { OAuth2CredentialController } from '@/controllers/oauth/oauth2-credential.controller';
 
 import { UserCredentialMappingController } from '@/controllers/user-credential-mapping.controller';
 
@@ -398,20 +400,20 @@ export = {
 				let oauthType: 'oauth1' | 'oauth2' | null = null;
 				const credentialType = credential.type.toLowerCase();
 
-				// OAuth2 credential types (check OAuth2 first to handle cases like twitterOAuth2Api)
+				// OAuth2 credential types (be more specific to avoid false matches)
 				if (
 					credentialType.includes('oauth2') ||
-					credentialType.includes('google') ||
-					credentialType.includes('facebook') ||
-					credentialType.includes('github') ||
-					credentialType.includes('microsoft') ||
-					credentialType.includes('slack') ||
-					credentialType.includes('discord') ||
-					credentialType.includes('linkedin')
+					credentialType.includes('googleoauth2') ||
+					credentialType.includes('facebookgraph') ||
+					credentialType.includes('githuboauth2') ||
+					credentialType.includes('microsoftoauth2') ||
+					credentialType.includes('slackoauth2') ||
+					credentialType.includes('discordoauth2') ||
+					credentialType.includes('linkedinoauth2')
 				) {
 					oauthType = 'oauth2';
 				}
-				// OAuth1 credential types (check OAuth1 after OAuth2 to avoid conflicts)
+				// OAuth1 credential types
 				else if (credentialType.includes('oauth1')) {
 					oauthType = 'oauth1';
 				}
@@ -421,7 +423,7 @@ export = {
 				}
 
 				// Generate state parameter with custom user ID
-				const state = Buffer.from(
+				const customState = Buffer.from(
 					JSON.stringify({
 						credentialId,
 						customUserId,
@@ -430,14 +432,31 @@ export = {
 					}),
 				).toString('base64');
 
-				// Generate authorization URL directly to preserve custom state
-				const baseUrl = process.env.WEBHOOK_URL || 'http://localhost:5678';
-				const authUrl = `${baseUrl}/rest/${oauthType}/credential/auth?id=${encodeURIComponent(credentialId)}&state=${encodeURIComponent(state)}`;
+				// Create mock request for OAuth controllers to get the original OAuth URL
+				const mockReq = {
+					user: req.user,
+					query: { id: credentialId },
+				} as any;
+
+				let authUrl: string;
+
+				if (oauthType === 'oauth1') {
+					const oauth1Controller = Container.get(OAuth1CredentialController);
+					authUrl = await oauth1Controller.getAuthUri(mockReq);
+				} else {
+					const oauth2Controller = Container.get(OAuth2CredentialController);
+					authUrl = await oauth2Controller.getAuthUri(mockReq);
+				}
+
+				// Parse the generated URL and replace the state parameter with our custom state
+				const url = new URL(authUrl);
+				url.searchParams.set('state', customState);
+				const finalAuthUrl = url.toString();
 
 				return res.json({
-					authUrl,
+					authUrl: finalAuthUrl,
 					oauthType,
-					state,
+					state: customState,
 					credentialId,
 					customUserId,
 					message: `Redirect user to authUrl to complete ${oauthType.toUpperCase()} authorization`,

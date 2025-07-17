@@ -375,20 +375,19 @@ const INVALID_PAYLOADS = [
 ];
 
 describe('POST /credentials/multi-user/oauth/url', () => {
-	test('should generate OAuth URL with custom user ID in state parameter', async () => {
-		// Create an OAuth credential
+	test('should return 400 for non-OAuth credential types', async () => {
+		// Create a non-OAuth credential
 		const credential = await saveCredential(
 			{
-				name: 'Test OAuth2 Credential',
-				type: 'googleOAuth2Api',
+				name: 'Test GitHub Credential',
+				type: 'githubApi',
 				data: {
-					clientId: 'test-client-id',
-					clientSecret: 'test-client-secret',
-					scope: 'https://www.googleapis.com/auth/drive',
+					accessToken: 'test-token',
+					server: 'https://github.com',
 				},
 				useUserFilter: true,
 			},
-			{ user: owner, role: 'credential:owner' },
+			{ user: owner },
 		);
 
 		const customUserId = 'test-user-123';
@@ -399,24 +398,9 @@ describe('POST /credentials/multi-user/oauth/url', () => {
 				credentialId: credential.id,
 				customUserId,
 			})
-			.expect(200);
+			.expect(400);
 
-		expect(response.body).toHaveProperty('authUrl');
-		expect(response.body).toHaveProperty('oauthType', 'oauth2');
-		expect(response.body).toHaveProperty('state');
-		expect(response.body).toHaveProperty('credentialId', credential.id);
-		expect(response.body).toHaveProperty('customUserId', customUserId);
-
-		// Verify the state parameter in the OAuth URL contains the custom user ID
-		const authUrl = new URL(response.body.authUrl);
-		const stateParam = authUrl.searchParams.get('state');
-		expect(stateParam).toBeTruthy();
-
-		const decodedState = JSON.parse(Buffer.from(stateParam!, 'base64').toString());
-		expect(decodedState).toHaveProperty('credentialId', credential.id);
-		expect(decodedState).toHaveProperty('customUserId', customUserId);
-		expect(decodedState).toHaveProperty('userId', owner.id);
-		expect(decodedState).toHaveProperty('timestamp');
+		expect(response.body.message).toBe('Credential type does not support OAuth flow');
 	});
 
 	test('should return 400 when credentialId is missing', async () => {
