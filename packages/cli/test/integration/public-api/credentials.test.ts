@@ -373,3 +373,85 @@ const INVALID_PAYLOADS = [
 	[],
 	undefined,
 ];
+
+describe('POST /credentials/multi-user/oauth/url', () => {
+	test('should generate OAuth URL with custom user ID in state parameter', async () => {
+		// Create an OAuth credential
+		const credential = await saveCredential(
+			{
+				name: 'Test OAuth2 Credential',
+				type: 'googleOAuth2Api',
+				data: {
+					clientId: 'test-client-id',
+					clientSecret: 'test-client-secret',
+					scope: 'https://www.googleapis.com/auth/drive',
+				},
+				useUserFilter: true,
+			},
+			{ user: owner, role: 'credential:owner' },
+		);
+
+		const customUserId = 'test-user-123';
+
+		const response = await authOwnerAgent
+			.post('/credentials/multi-user/oauth/url')
+			.send({
+				credentialId: credential.id,
+				customUserId,
+			})
+			.expect(200);
+
+		expect(response.body).toHaveProperty('authUrl');
+		expect(response.body).toHaveProperty('oauthType', 'oauth2');
+		expect(response.body).toHaveProperty('state');
+		expect(response.body).toHaveProperty('credentialId', credential.id);
+		expect(response.body).toHaveProperty('customUserId', customUserId);
+
+		// Verify the state parameter in the OAuth URL contains the custom user ID
+		const authUrl = new URL(response.body.authUrl);
+		const stateParam = authUrl.searchParams.get('state');
+		expect(stateParam).toBeTruthy();
+
+		const decodedState = JSON.parse(Buffer.from(stateParam!, 'base64').toString());
+		expect(decodedState).toHaveProperty('credentialId', credential.id);
+		expect(decodedState).toHaveProperty('customUserId', customUserId);
+		expect(decodedState).toHaveProperty('userId', owner.id);
+		expect(decodedState).toHaveProperty('timestamp');
+	});
+
+	test('should return 400 when credentialId is missing', async () => {
+		const response = await authOwnerAgent
+			.post('/credentials/multi-user/oauth/url')
+			.send({
+				customUserId: 'test-user-123',
+			})
+			.expect(400);
+
+		expect(response.body.message).toBe("request/body must have required property 'credentialId'");
+	});
+
+	test('should return 400 when customUserId is missing', async () => {
+		const response = await authOwnerAgent
+			.post('/credentials/multi-user/oauth/url')
+			.send({
+				credentialId: 'some-id',
+			})
+			.expect(400);
+
+		expect(response.body.message).toBe("request/body must have required property 'customUserId'");
+	});
+
+	test('should return 403 when user is not admin or owner', async () => {
+		const response = await authMemberAgent
+			.post('/credentials/multi-user/oauth/url')
+			.send({
+				credentialId: 'some-id',
+				customUserId: 'test-user-123',
+			})
+			.expect(403);
+
+		expect(response.body.message).toBe(
+			'Only administrators can access multi-user OAuth credentials',
+		);
+	});
+});

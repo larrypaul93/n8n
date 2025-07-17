@@ -8,8 +8,7 @@ import { CredentialTypes } from '@/credential-types';
 import { EnterpriseCredentialsService } from '@/credentials/credentials.service.ee';
 import { CredentialsService } from '@/credentials/credentials.service';
 import { CredentialsHelper } from '@/credentials-helper';
-import { OAuth1CredentialController } from '@/controllers/oauth/oauth1-credential.controller';
-import { OAuth2CredentialController } from '@/controllers/oauth/oauth2-credential.controller';
+
 import { UserCredentialMappingController } from '@/controllers/user-credential-mapping.controller';
 
 import { validCredentialsProperties, validCredentialType } from './credentials.middleware';
@@ -431,21 +430,9 @@ export = {
 					}),
 				).toString('base64');
 
-				// Create mock request for OAuth controllers
-				const mockReq = {
-					user: req.user,
-					query: { id: credentialId, state },
-				} as any;
-
-				let authUrl: string;
-
-				if (oauthType === 'oauth1') {
-					const oauth1Controller = Container.get(OAuth1CredentialController);
-					authUrl = await oauth1Controller.getAuthUri(mockReq);
-				} else {
-					const oauth2Controller = Container.get(OAuth2CredentialController);
-					authUrl = await oauth2Controller.getAuthUri(mockReq);
-				}
+				// Generate authorization URL directly to preserve custom state
+				const baseUrl = process.env.WEBHOOK_URL || 'http://localhost:5678';
+				const authUrl = `${baseUrl}/rest/${oauthType}/credential/auth?id=${encodeURIComponent(credentialId)}&state=${encodeURIComponent(state)}`;
 
 				return res.json({
 					authUrl,
