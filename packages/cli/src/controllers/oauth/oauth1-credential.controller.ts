@@ -8,6 +8,9 @@ import type { RequestOptions } from 'oauth-1.0a';
 import clientOAuth1 from 'oauth-1.0a';
 
 import { OAuthRequest } from '@/requests';
+import { UserCredentialMappingRepository } from '@n8n/db';
+import { UserCredentialDataService } from '@/credentials/user-credential-data.service';
+import { Container } from '@n8n/di';
 
 import { AbstractOAuthController, skipAuthOnOAuthCallback } from './abstract-oauth.controller';
 
@@ -131,7 +134,57 @@ export class OAuth1CredentialController extends AbstractOAuthController {
 
 			const oauthTokenData = Object.fromEntries(paramParser.entries());
 
-			await this.encryptAndSaveData(credential, { oauthTokenData }, ['csrfSecret']);
+			// Check if this is a multi-user credential flow by examining the decoded state
+			let customUserId: string | undefined;
+			let multiUserCredentialId: string | undefined;
+
+			try {
+				const decodedState = JSON.parse(Buffer.from(encodedState, 'base64').toString());
+				customUserId = decodedState.customUserId;
+				multiUserCredentialId = decodedState.multiUserCredentialId;
+			} catch (error) {
+				// If state decoding fails, it's not a multi-user flow
+			}
+
+			const isMultiUserFlow = customUserId && multiUserCredentialId;
+
+			if (isMultiUserFlow) {
+				// For multi-user flows, store the OAuth token data in the mapping table only
+				// The base credential remains as a template
+				try {
+					const userCredentialMappingRepository = Container.get(UserCredentialMappingRepository);
+					const userCredentialDataService = Container.get(UserCredentialDataService);
+
+					// Encrypt the OAuth token data for the mapping
+					const encryptedData = userCredentialDataService.encryptCredentialData({ oauthTokenData });
+
+					// Create or update the credential mapping with the OAuth token data
+					await userCredentialMappingRepository.createOrUpdateMapping(
+						customUserId as string,
+						multiUserCredentialId as string,
+						encryptedData,
+						{ oauthCompleted: true, completedAt: new Date().toISOString() },
+						`OAuth credential for ${customUserId}`,
+					);
+
+					this.logger.debug('Multi-user credential mapping created with OAuth token data', {
+						customUserId,
+						templateCredentialId: multiUserCredentialId,
+						credentialId: credential.id,
+					});
+				} catch (mappingError) {
+					this.logger.error('Failed to create multi-user credential mapping', {
+						error: mappingError.message,
+						customUserId,
+						templateCredentialId: multiUserCredentialId,
+						credentialId: credential.id,
+					});
+					// Don't fail the OAuth flow if mapping creation fails
+				}
+			} else {
+				// For regular (single-user) flows, save the OAuth token data to the base credential
+				await this.encryptAndSaveData(credential, { oauthTokenData }, ['csrfSecret']);
+			}
 
 			this.logger.debug('OAuth1 callback successful for new credential', {
 				credentialId: credential.id,

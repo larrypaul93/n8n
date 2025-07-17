@@ -422,16 +422,6 @@ export = {
 					return res.status(400).json({ message: 'Credential type does not support OAuth flow' });
 				}
 
-				// Generate state parameter with custom user ID
-				const customState = Buffer.from(
-					JSON.stringify({
-						credentialId,
-						customUserId,
-						userId: req.user.id,
-						timestamp: Date.now(),
-					}),
-				).toString('base64');
-
 				// Create mock request for OAuth controllers to get the original OAuth URL
 				const mockReq = {
 					user: req.user,
@@ -448,15 +438,33 @@ export = {
 					authUrl = await oauth2Controller.getAuthUri(mockReq);
 				}
 
-				// Parse the generated URL and replace the state parameter with our custom state
+				// Parse the generated URL and modify the state parameter
 				const url = new URL(authUrl);
-				url.searchParams.set('state', customState);
+				const originalState = url.searchParams.get('state');
+
+				if (!originalState) {
+					throw new Error('OAuth URL missing state parameter');
+				}
+
+				// Decode the original state (base64 -> JSON)
+				const decodedState = JSON.parse(Buffer.from(originalState, 'base64').toString());
+
+				// Add custom user ID and multi-user credential ID to the state
+				decodedState.customUserId = customUserId;
+				decodedState.multiUserCredentialId = credentialId;
+
+				// Re-encode the modified state (JSON -> base64)
+				const modifiedState = Buffer.from(JSON.stringify(decodedState)).toString('base64');
+
+				// Update the state parameter in the URL
+				url.searchParams.set('state', modifiedState);
+
 				const finalAuthUrl = url.toString();
 
 				return res.json({
 					authUrl: finalAuthUrl,
 					oauthType,
-					state: customState,
+					state: modifiedState,
 					credentialId,
 					customUserId,
 					message: `Redirect user to authUrl to complete ${oauthType.toUpperCase()} authorization`,
