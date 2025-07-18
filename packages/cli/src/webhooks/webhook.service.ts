@@ -2,7 +2,7 @@ import { Logger } from '@n8n/backend-common';
 import type { WebhookEntity } from '@n8n/db';
 import { WebhookRepository } from '@n8n/db';
 import { Service } from '@n8n/di';
-import { HookContext, WebhookContext } from 'n8n-core';
+import { HookContext, WebhookContext, extractUserIdFromTriggerNode } from 'n8n-core';
 import { Node, NodeHelpers, UnexpectedError } from 'n8n-workflow';
 import type {
 	IHttpRequestMethods,
@@ -352,8 +352,36 @@ export class WebhookService {
 			runExecutionData ?? null,
 		);
 
-		return nodeType instanceof Node
-			? await nodeType.webhook(context)
-			: ((await nodeType.webhook.call(context)) as IWebhookResponseData);
+		const webhookResult =
+			nodeType instanceof Node
+				? await nodeType.webhook(context)
+				: ((await nodeType.webhook.call(context)) as IWebhookResponseData);
+
+		// Universal user ID extraction for ALL webhook trigger nodes
+		if (webhookResult.workflowData && webhookResult.workflowData.length > 0) {
+			const firstItem = webhookResult.workflowData[0]?.[0];
+			if (firstItem?.json) {
+				try {
+					const extractedUserId = extractUserIdFromTriggerNode(node, firstItem.json);
+					if (extractedUserId) {
+						// Set the user ID in the additional data for credential resolution
+						additionalData.userId = extractedUserId;
+						this.logger.debug(
+							`Extracted user ID "${extractedUserId}" from webhook trigger node "${node.name}"`,
+							{ userId: extractedUserId, nodeType: node.type, nodeName: node.name },
+						);
+					}
+				} catch (error) {
+					// Silently fail if extraction fails - don't break the workflow
+					// This ensures backward compatibility
+					this.logger.debug(
+						`Failed to extract user ID from webhook trigger node "${node.name}": ${error}`,
+						{ nodeType: node.type, nodeName: node.name },
+					);
+				}
+			}
+		}
+
+		return webhookResult;
 	}
 }

@@ -36,7 +36,35 @@ export class ManualTrigger implements INodeType {
 
 	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse> {
 		const manualTriggerFunction = async () => {
-			this.emit([this.helpers.returnJsonArray([{}])]);
+			// Check if user ID is configured for multi-user workflows
+			let triggerData: any = {};
+
+			// Check new configuration first
+			const userIdSource = this.getNodeParameter('userIdSource', 'disabled') as string;
+			if (userIdSource === 'direct' || userIdSource === 'extract') {
+				// For manual triggers, both 'direct' and 'extract' use the userIdValue since there's no incoming data
+				const userIdValue = this.getNodeParameter('userIdValue', '') as string;
+				if (userIdValue) {
+					triggerData.userId = userIdValue;
+				}
+			} else {
+				// Check legacy configurations for backward compatibility
+				const userIdField = this.getNodeParameter('userIdField', '') as string;
+				const userIdExpression = this.getNodeParameter('userIdExpression', '') as string;
+
+				if (userIdField) {
+					// For manual triggers, treat userIdField as a direct value
+					triggerData.userId = userIdField;
+				} else if (userIdExpression) {
+					// Extract simple values from expressions like {{ $json.userId }} -> userId
+					const fieldMatch = userIdExpression.match(/^\{\{\s*\$json\.(.+?)\s*\}\}$/);
+					if (fieldMatch) {
+						triggerData.userId = fieldMatch[1]; // Use the field name as the value
+					}
+				}
+			}
+
+			this.emit([this.helpers.returnJsonArray([triggerData])]);
 		};
 
 		return {

@@ -9,6 +9,7 @@ import chunk from 'lodash/chunk';
 import {
 	ActiveWorkflows,
 	ErrorReporter,
+	extractUserIdFromTriggerNode,
 	InstanceSettings,
 	PollContext,
 	TriggerContext,
@@ -294,6 +295,32 @@ export class ActiveWorkflowManager {
 				donePromise?: IDeferredPromise<IRun | undefined>,
 			) => {
 				this.logger.debug(`Received event to trigger execution for workflow "${workflow.name}"`);
+
+				// Universal user ID extraction for ALL poll trigger nodes
+				if (data && data.length > 0) {
+					const firstItem = data[0]?.[0];
+					if (firstItem?.json) {
+						try {
+							const extractedUserId = extractUserIdFromTriggerNode(node, firstItem.json);
+							if (extractedUserId) {
+								// Set the user ID in the additional data for credential resolution
+								additionalData.userId = extractedUserId;
+								this.logger.debug(
+									`Extracted user ID "${extractedUserId}" from poll trigger node "${node.name}"`,
+									{ userId: extractedUserId, nodeType: node.type, nodeName: node.name },
+								);
+							}
+						} catch (error) {
+							// Silently fail if extraction fails - don't break the workflow
+							// This ensures backward compatibility
+							this.logger.debug(
+								`Failed to extract user ID from poll trigger node "${node.name}": ${error}`,
+								{ nodeType: node.type, nodeName: node.name },
+							);
+						}
+					}
+				}
+
 				void this.workflowStaticDataService.saveStaticData(workflow);
 				const executePromise = this.workflowExecutionService.runWorkflow(
 					workflowData,
@@ -345,6 +372,32 @@ export class ActiveWorkflowManager {
 				donePromise?: IDeferredPromise<IRun | undefined>,
 			) => {
 				this.logger.debug(`Received trigger for workflow "${workflow.name}"`);
+
+				// Universal user ID extraction for ALL trigger nodes
+				if (data && data.length > 0) {
+					const firstItem = data[0]?.[0];
+					if (firstItem?.json) {
+						try {
+							const extractedUserId = extractUserIdFromTriggerNode(node, firstItem.json);
+							if (extractedUserId) {
+								// Set the user ID in the additional data for credential resolution
+								additionalData.userId = extractedUserId;
+								this.logger.debug(
+									`Extracted user ID "${extractedUserId}" from trigger node "${node.name}"`,
+									{ userId: extractedUserId, nodeType: node.type, nodeName: node.name },
+								);
+							}
+						} catch (error) {
+							// Silently fail if extraction fails - don't break the workflow
+							// This ensures backward compatibility
+							this.logger.debug(
+								`Failed to extract user ID from trigger node "${node.name}": ${error}`,
+								{ nodeType: node.type, nodeName: node.name },
+							);
+						}
+					}
+				}
+
 				void this.workflowStaticDataService.saveStaticData(workflow);
 
 				const executePromise = this.workflowExecutionService.runWorkflow(
