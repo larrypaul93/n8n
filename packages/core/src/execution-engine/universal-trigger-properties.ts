@@ -136,46 +136,71 @@ export function extractUserIdFromTriggerData(data: any, fieldPath: string): stri
  */
 export function extractUserIdFromTriggerNode(node: any, data: any): string | undefined {
 	try {
+		console.log(`extractUserIdFromTriggerNode: Node "${node.name}" (${node.type})`);
+		console.log(
+			`extractUserIdFromTriggerNode: Node parameters:`,
+			JSON.stringify(node.parameters, null, 2),
+		);
+		console.log(`extractUserIdFromTriggerNode: Data:`, JSON.stringify(data, null, 2));
+
 		// Check for new simplified configuration
 		const userIdSource = node.parameters?.userIdSource as string;
+		console.log(`extractUserIdFromTriggerNode: userIdSource = "${userIdSource}"`);
 
 		switch (userIdSource) {
 			case 'extract':
 				const fieldPath = node.parameters?.userIdFieldPath as string;
+				console.log(`extractUserIdFromTriggerNode: extract mode, fieldPath = "${fieldPath}"`);
 				if (fieldPath) {
-					return extractUserIdFromTriggerData(data, fieldPath);
+					const result = extractUserIdFromTriggerData(data, fieldPath);
+					console.log(`extractUserIdFromTriggerNode: extracted result = "${result}"`);
+					return result;
 				}
 				break;
 
 			case 'direct':
 				const directValue = node.parameters?.userIdValue as string;
+				console.log(`extractUserIdFromTriggerNode: direct mode, directValue = "${directValue}"`);
 				if (directValue) {
+					console.log(`extractUserIdFromTriggerNode: returning direct value = "${directValue}"`);
 					return String(directValue);
 				}
 				break;
 
 			case 'disabled':
 			default:
+				console.log(`extractUserIdFromTriggerNode: disabled/default mode, checking legacy configs`);
 				// Fall back to legacy configurations for backward compatibility
 				const userIdExpression = node.parameters?.userIdExpression as string;
 				if (userIdExpression) {
+					console.log(
+						`extractUserIdFromTriggerNode: found userIdExpression = "${userIdExpression}"`,
+					);
 					// Handle simple {{ $json.field }} expressions without full expression engine
 					const fieldMatch = userIdExpression.match(/^\{\{\s*\$json\.(.+?)\s*\}\}$/);
 					if (fieldMatch) {
-						return extractUserIdFromTriggerData(data, fieldMatch[1]);
+						const result = extractUserIdFromTriggerData(data, fieldMatch[1]);
+						console.log(`extractUserIdFromTriggerNode: expression result = "${result}"`);
+						return result;
 					}
 				}
 
 				const userIdField = node.parameters?.userIdField as string;
 				if (userIdField) {
-					return extractUserIdFromTriggerData(data, userIdField);
+					console.log(`extractUserIdFromTriggerNode: found userIdField = "${userIdField}"`);
+					const result = extractUserIdFromTriggerData(data, userIdField);
+					console.log(`extractUserIdFromTriggerNode: field result = "${result}"`);
+					return result;
 				}
 
+				console.log(`extractUserIdFromTriggerNode: no legacy configs found`);
 				return undefined;
 		}
 
+		console.log(`extractUserIdFromTriggerNode: no result, returning undefined`);
 		return undefined;
 	} catch (error) {
+		console.log(`extractUserIdFromTriggerNode: error occurred:`, error);
 		return undefined;
 	}
 }

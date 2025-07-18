@@ -376,26 +376,44 @@ export class ActiveWorkflowManager {
 				// Universal user ID extraction for ALL trigger nodes
 				if (data && data.length > 0) {
 					const firstItem = data[0]?.[0];
+					console.log(
+						`Trigger emit: Node "${node.name}" (${node.type}) emitted data:`,
+						JSON.stringify(firstItem?.json, null, 2),
+					);
 					if (firstItem?.json) {
 						try {
 							const extractedUserId = extractUserIdFromTriggerNode(node, firstItem.json);
+							console.log(
+								`Trigger emit: Extracted user ID "${extractedUserId}" from node "${node.name}"`,
+							);
 							if (extractedUserId) {
 								// Set the user ID in the additional data for credential resolution
 								additionalData.userId = extractedUserId;
+								console.log(`Trigger emit: Set additionalData.userId to "${extractedUserId}"`);
 								this.logger.debug(
 									`Extracted user ID "${extractedUserId}" from trigger node "${node.name}"`,
 									{ userId: extractedUserId, nodeType: node.type, nodeName: node.name },
 								);
+							} else {
+								console.log(`Trigger emit: No user ID extracted from node "${node.name}"`);
 							}
 						} catch (error) {
 							// Silently fail if extraction fails - don't break the workflow
 							// This ensures backward compatibility
+							console.log(
+								`Trigger emit: Failed to extract user ID from node "${node.name}":`,
+								error,
+							);
 							this.logger.debug(
 								`Failed to extract user ID from trigger node "${node.name}": ${error}`,
 								{ nodeType: node.type, nodeName: node.name },
 							);
 						}
+					} else {
+						console.log(`Trigger emit: No JSON data in first item from node "${node.name}"`);
 					}
+				} else {
+					console.log(`Trigger emit: No data emitted from node "${node.name}"`);
 				}
 
 				void this.workflowStaticDataService.saveStaticData(workflow);

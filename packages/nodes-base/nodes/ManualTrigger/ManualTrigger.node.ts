@@ -64,6 +64,7 @@ export class ManualTrigger implements INodeType {
 				}
 			}
 
+			console.log('ManualTrigger: Emitting trigger data:', JSON.stringify(triggerData, null, 2));
 			this.emit([this.helpers.returnJsonArray([triggerData])]);
 		};
 
