@@ -88,7 +88,9 @@ import { AddProjectDescriptionColumn1747824239000 } from '../common/174782423900
 import { AddLastActiveAtColumnToUser1750252139166 } from '../common/1750252139166-AddLastActiveAtColumnToUser';
 import { CreateUserCredentialMappingTable1750886297000 } from '../common/1750886297000-CreateUserCredentialMappingTable';
 import { RecreateUserCredentialMappingTable1750886298000 } from '../common/1750886298000-RecreateUserCredentialMappingTable';
+import { AddInputsOutputsToTestCaseExecution1752669793000 } from '../common/1752669793000-AddInputsOutputsToTestCaseExecution';
 import type { Migration } from '../migration-types';
+
 const sqliteMigrations: Migration[] = [
 	InitialMigration1588102412422,
 	WebhookModel1592445003908,
@@ -180,6 +182,7 @@ const sqliteMigrations: Migration[] = [
 	AddUserFilterColumnToCredentialsTable1750886296000,
 	CreateUserCredentialMappingTable1750886297000,
 	RecreateUserCredentialMappingTable1750886298000,
+	AddInputsOutputsToTestCaseExecution1752669793000,
 ];
 
 export { sqliteMigrations };

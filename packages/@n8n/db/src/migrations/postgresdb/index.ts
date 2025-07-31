@@ -1,4 +1,5 @@
 import { AddMfaColumns1690000000030 } from './../common/1690000000040-AddMfaColumns';
+import { AddInputsOutputsToTestCaseExecution1752669793000 } from './../common/1752669793000-AddInputsOutputsToTestCaseExecution';
 import { InitialMigration1587669153312 } from './1587669153312-InitialMigration';
 import { WebhookModel1589476000887 } from './1589476000887-WebhookModel';
 import { CreateIndexStoppedAt1594828256133 } from './1594828256133-CreateIndexStoppedAt';
@@ -187,4 +188,5 @@ export const postgresMigrations: Migration[] = [
 	AddUserFilterColumnToCredentialsTable1750886296000,
 	CreateUserCredentialMappingTable1750886297000,
 	RecreateUserCredentialMappingTable1750886298000,
+	AddInputsOutputsToTestCaseExecution1752669793000,
 ];

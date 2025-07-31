@@ -138,17 +138,10 @@ describe('GlobalConfig', () => {
 			files: [],
 		},
 		nodes: {
-			communityPackages: {
-				enabled: true,
-				registry: 'https://registry.npmjs.org',
-				reinstallMissing: false,
-				unverifiedEnabled: true,
-				verifiedEnabled: true,
-				preventLoading: false,
-			},
 			errorTriggerType: 'n8n-nodes-base.errorTrigger',
 			include: [],
 			exclude: [],
+			pythonEnabled: true,
 		},
 		publicApi: {
 			disabled: false,
@@ -176,6 +169,7 @@ describe('GlobalConfig', () => {
 				enable: false,
 				prefix: 'n8n_',
 				includeWorkflowIdLabel: false,
+				includeWorkflowNameLabel: false,
 				includeDefaultMetrics: true,
 				includeMessageEventBusMetrics: false,
 				includeNodeTypeLabel: false,
@@ -255,6 +249,7 @@ describe('GlobalConfig', () => {
 			maxConcurrency: 10,
 			taskTimeout: 300,
 			heartbeatInterval: 30,
+			insecureMode: false,
 		},
 		sentry: {
 			backendDsn: '',
@@ -272,6 +267,9 @@ describe('GlobalConfig', () => {
 				location: 'logs/n8n.log',
 			},
 			scopes: [],
+			cron: {
+				activeInterval: 0,
+			},
 		},
 		multiMainSetup: {
 			enabled: false,
@@ -297,6 +295,7 @@ describe('GlobalConfig', () => {
 			daysAbandonedWorkflow: 90,
 			contentSecurityPolicy: '{}',
 			contentSecurityPolicyReportOnly: false,
+			disableIframeSandboxing: false,
 		},
 		executions: {
 			pruneData: true,
@@ -329,6 +328,28 @@ describe('GlobalConfig', () => {
 		workflowHistory: {
 			enabled: true,
 			pruneTime: -1,
+		},
+		sso: {
+			justInTimeProvisioning: true,
+			redirectLoginToSso: true,
+			saml: {
+				loginEnabled: false,
+				loginLabel: '',
+			},
+			oidc: {
+				loginEnabled: false,
+			},
+			ldap: {
+				loginEnabled: false,
+				loginLabel: '',
+			},
+		},
+		redis: {
+			prefix: 'n8n',
+		},
+		externalFrontendHooksUrls: '',
+		ai: {
+			enabled: false,
 		},
 	};
 

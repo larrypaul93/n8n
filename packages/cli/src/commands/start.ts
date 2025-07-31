@@ -13,6 +13,8 @@ import replaceStream from 'replacestream';
 import { pipeline } from 'stream/promises';
 import { z } from 'zod';
 
+import { BaseCommand } from './base-command';
+
 import { ActiveExecutions } from '@/active-executions';
 import { ActiveWorkflowManager } from '@/active-workflow-manager';
 import config from '@/config';
@@ -31,10 +33,9 @@ import { ExecutionsPruningService } from '@/services/pruning/executions-pruning.
 import { UrlService } from '@/services/url.service';
 import { WaitTracker } from '@/wait-tracker';
 import { WorkflowRunner } from '@/workflow-runner';
+import { CommunityPackagesConfig } from '@/community-packages/community-packages.config';
 
-import { BaseCommand } from './base-command';
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const open = require('open');
 
 const flagsSchema = z.object({
@@ -126,7 +127,7 @@ export class Start extends BaseCommand<z.infer<typeof flagsSchema>> {
 	private async generateStaticAssets() {
 		// Read the index file and replace the path placeholder
 		const n8nPath = this.globalConfig.path;
-		const hooksUrls = config.getEnv('externalFrontendHooksUrls');
+		const hooksUrls = this.globalConfig.externalFrontendHooksUrls;
 
 		let scriptsString = '';
 		if (hooksUrls) {
@@ -147,7 +148,6 @@ export class Start extends BaseCommand<z.infer<typeof flagsSchema>> {
 					replaceStream('/{{BASE_PATH}}/', n8nPath, { ignoreCase: false }),
 					replaceStream('/%7B%7BBASE_PATH%7D%7D/', n8nPath, { ignoreCase: false }),
 					replaceStream('/%257B%257BBASE_PATH%257D%257D/', n8nPath, { ignoreCase: false }),
-					replaceStream('/static/', n8nPath + 'static/', { ignoreCase: false }),
 				];
 				if (filePath.endsWith('index.html')) {
 					streams.push(
@@ -164,9 +164,8 @@ export class Start extends BaseCommand<z.infer<typeof flagsSchema>> {
 			}
 		};
 
-		await compileFile('index.html');
 		const files = await glob('**/*.{css,js}', { cwd: EDITOR_UI_DIST_DIR });
-		await Promise.all(files.map(compileFile));
+		await Promise.all([compileFile('index.html'), ...files.map(compileFile)]);
 	}
 
 	async init() {
@@ -180,14 +179,14 @@ export class Start extends BaseCommand<z.infer<typeof flagsSchema>> {
 		}
 
 		const { flags } = this;
-		const { communityPackages } = this.globalConfig.nodes;
+		const communityPackagesConfig = Container.get(CommunityPackagesConfig);
 		// cli flag overrides the config env variable
 		if (flags.reinstallMissingPackages) {
-			if (communityPackages.enabled) {
+			if (communityPackagesConfig.enabled) {
 				this.logger.warn(
 					'`--reinstallMissingPackages` is deprecated: Please use the env variable `N8N_REINSTALL_MISSING_PACKAGES` instead',
 				);
-				communityPackages.reinstallMissing = true;
+				communityPackagesConfig.reinstallMissing = true;
 			} else {
 				this.logger.warn(
 					'`--reinstallMissingPackages` was passed, but community packages are disabled',

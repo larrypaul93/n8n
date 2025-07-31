@@ -51,6 +51,7 @@ const props = withDefaults(
 		hideIcon?: boolean;
 		hideLabel?: boolean;
 		tooltip?: string;
+		tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
 	}>(),
 	{
 		disabled: false,
@@ -64,6 +65,8 @@ const emit = defineEmits<{
 	execute: [];
 	valueChanged: [value: IUpdateInformation];
 }>();
+
+const slots = defineSlots<{ persistentTooltipContent?: {} }>();
 
 defineOptions({
 	inheritAttrs: false,
@@ -387,7 +390,16 @@ async function onClick() {
 </script>
 
 <template>
-	<N8nTooltip placement="right" :disabled="!tooltipText" :content="tooltipText">
+	<N8nTooltip
+		:placement="tooltipPlacement ?? 'right'"
+		:disabled="!tooltipText && !slots.persistentTooltipContent"
+		:visible="slots.persistentTooltipContent ? true : undefined"
+	>
+		<template #content>
+			<slot name="persistentTooltipContent">
+				{{ tooltipText }}
+			</slot>
+		</template>
 		<N8nButton
 			v-bind="$attrs"
 			:loading="isLoading"
