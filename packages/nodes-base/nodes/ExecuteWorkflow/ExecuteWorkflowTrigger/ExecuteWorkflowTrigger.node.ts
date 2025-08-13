@@ -17,6 +17,7 @@ import {
 	FALLBACK_DEFAULT_VALUE,
 } from '../../../utils/workflowInputsResourceMapping/constants';
 import { getFieldEntries } from '../../../utils/workflowInputsResourceMapping/GenericFunctions';
+import { extractUserIdFromTriggerNode } from 'n8n-core';
 
 export class ExecuteWorkflowTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -207,8 +208,10 @@ export class ExecuteWorkflowTrigger implements INodeType {
 		// so we just need to be permissive on this end,
 		// while ensuring we provide default values for fields in our schema, which are removed in the resourceMapper.
 
+		let outputData: INodeExecutionData[][];
+
 		if (inputSource === PASSTHROUGH) {
-			return [inputData];
+			outputData = [inputData];
 		} else {
 			const newParams = getFieldEntries(this);
 			const newKeys = new Set(newParams.fields.map((x) => x.name));
@@ -223,7 +226,29 @@ export class ExecuteWorkflowTrigger implements INodeType {
 				binary,
 			}));
 
-			return [itemsInSchema];
+			outputData = [itemsInSchema];
 		}
+
+		// Extract user ID for multi-user credential support
+		// This is needed because ExecuteWorkflowTrigger uses execute() instead of trigger()
+		// and doesn't go through the normal trigger execution path that handles user ID extraction
+		try {
+			const firstItem = outputData[0]?.[0];
+			if (firstItem?.json) {
+				const node = this.getNode();
+				const extractedUserId = extractUserIdFromTriggerNode(node, firstItem.json);
+
+				if (extractedUserId) {
+					// Set the user ID in the additional data for credential resolution
+					// Access additionalData directly from the execution context
+					(this as any).additionalData.userId = extractedUserId;
+				}
+			}
+		} catch (error) {
+			// Silently fail if extraction fails - don't break the workflow
+			// This ensures backward compatibility
+		}
+
+		return outputData;
 	}
 }
